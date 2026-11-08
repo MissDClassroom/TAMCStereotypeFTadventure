@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+<title>Mystery Postcards Quiz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: an expedition logbook. A route line at the top, one stop at a time below, ending with a boarding pass. */
+:root{
+  --paper:#F1F2EE; --card:#FBFBF8; --ink:#1C2430; --muted:#5B6472; --line:#D3D7D0;
+  --sea:#1F5F73; --sea-soft:#DCE9EC; --stamp:#B23A48; --stamp-soft:#F3DDE0; --sun:#C99A2E; --sun-soft:#F4EAD2; --ok:#2F7A4B; --ok-soft:#DCEFE2;
+  --display:"Young Serif", Georgia, serif;
+  --body:"Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --ipa:"Noto Sans", "Lucida Sans Unicode", "Segoe UI", "DejaVu Sans", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#141A21; --card:#1B232C; --ink:#E7EAE6; --muted:#9AA4B0; --line:#2E3946;
+  --sea:#6FB4C8; --sea-soft:#1E3640; --stamp:#E7808C; --stamp-soft:#3A2228; --sun:#E2BC5E; --sun-soft:#383020; --ok:#7CCB97; --ok-soft:#1D3527; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#141A21; --card:#1B232C; --ink:#E7EAE6; --muted:#9AA4B0; --line:#2E3946;
+  --sea:#6FB4C8; --sea-soft:#1E3640; --stamp:#E7808C; --stamp-soft:#3A2228; --sun:#E2BC5E; --sun-soft:#383020; --ok:#7CCB97; --ok-soft:#1D3527; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:400 18px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin:0 auto;padding-block:24px 48px;display:flex;flex-direction:column;gap:20px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2rem,6vw,3rem)}
+h2{font-size:1.6rem}
+p{margin:0}
+.label{font:500 .74rem/1.2 var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+button,input{font:inherit}
+button{cursor:pointer;border:1px solid var(--ink);background:transparent;color:var(--ink);padding:11px 18px;font-weight:600}
+button:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:var(--sea);border-color:var(--sea);color:var(--card)}
+button.primary:hover:not(:disabled){background:var(--sea);color:var(--card);filter:brightness(1.1)}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+input[type=text]{width:100%;padding:13px 14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font-size:1.15rem}
+input[type=text]:focus{border-color:var(--sea);outline:none}
+
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+.clock{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums}
+
+/* route */
+.route{display:flex;align-items:center;gap:0;padding:4px 0}
+.route i{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 5px,transparent 5px 9px);min-width:4px}
+.route i.done{background:var(--ok)}
+.route b{width:12px;height:12px;border-radius:50%;border:2px solid var(--line);background:var(--card);flex:none}
+.route b.done{background:var(--ok);border-color:var(--ok)}
+.route b.now{border-color:var(--sun);background:var(--sun);box-shadow:0 0 0 4px var(--sun-soft)}
+.route b.gate{border-radius:2px;transform:rotate(45deg);width:13px;height:13px}
+.route .end{font:500 .68rem var(--mono);letter-spacing:.1em;color:var(--muted);margin-left:8px;flex:none}
+.legs{display:flex;justify-content:space-between;gap:8px}
+
+.panel{background:var(--card);border:1px solid var(--line);padding:24px;display:flex;flex-direction:column;gap:16px}
+.story{font-size:1.08rem;max-width:62ch}
+.rules{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+
+.postcard{background:var(--card);border:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:14px;position:relative}
+.postcard.withstamp::after{content:"";position:absolute;top:16px;right:16px;width:40px;height:48px;border:2px dashed var(--line)}
+.postcard.withstamp h2{padding-right:56px}
+.gatebar{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:1px dashed var(--line);padding-bottom:10px}
+.clues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.clues li{padding:12px 14px;border-left:4px solid var(--sea);background:var(--sea-soft);font-size:1.1rem;animation:in .35s ease}
+.clues li.new{border-left-color:var(--ok);background:var(--ok-soft)}
+.clues li.easy{border-left-color:var(--sun);background:var(--sun-soft)}
+.clues li small{display:block;font:500 .7rem/1.4 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+@keyframes in{from{opacity:.35;transform:translateY(6px)}to{opacity:1;transform:none}}
+.row{display:flex;gap:10px}
+.row input{flex:1;min-width:0}
+.feedback{min-height:1.5em;font-weight:600}
+.feedback.no{color:var(--stamp)}
+.feedback.hint{color:var(--sea)}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.more{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.timer{font:500 .9rem var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.question{font-size:1.25rem;font-weight:600}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font-weight:500;border-color:var(--line);background:var(--paper)}
+.opts button:hover:not(:disabled){background:var(--sea-soft);color:var(--ink);border-color:var(--sea)}
+.opts button.wrong{border-color:var(--stamp);background:var(--stamp-soft);color:var(--ink);text-decoration:line-through}
+.lock{display:flex;align-items:center;gap:12px;border:2px dashed var(--stamp);color:var(--stamp);padding:10px 14px;font-weight:600}
+.ipa{font:400 clamp(1.3rem,4vw,1.7rem)/1.6 var(--ipa);background:var(--paper);border:1px solid var(--line);padding:16px 18px;letter-spacing:.02em;overflow-wrap:anywhere}
+.hintbox{color:var(--sea);font-weight:600}
+
+.found{text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;padding:20px 0}
+.found .country{font:400 clamp(2.2rem,7vw,3.4rem)/1 var(--display)}
+.recap{width:100%;text-align:left;display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.bigstamp{border:4px double var(--ok);color:var(--ok);font:500 .9rem/1.3 var(--mono);text-transform:uppercase;letter-spacing:.12em;padding:10px 18px;transform:rotate(-6deg);animation:stamp .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes stamp{from{transform:scale(2.2) rotate(-14deg);opacity:0}to{transform:rotate(-6deg);opacity:1}}
+
+/* boarding pass */
+.pass{display:grid;grid-template-columns:1fr 150px;border:2px solid var(--ink);background:var(--card)}
+.pass .main{padding:22px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px}
+.pass .main .wide{grid-column:1/-1}
+.pass .field{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pass .field b{font:400 1.4rem/1.2 var(--display);overflow-wrap:anywhere}
+.pass .field b.mono{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums}
+.pass .stub{border-left:2px dashed var(--ink);padding:22px 16px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:var(--sea-soft)}
+.pass .stub b{font:400 2.4rem/1 var(--display);color:var(--sea)}
+.bars{height:46px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 7px,transparent 7px 9px,var(--ink) 9px 10px,transparent 10px 13px)}
+@media (max-width:560px){.pass{grid-template-columns:1fr}.pass .stub{border-left:0;border-top:2px dashed var(--ink)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+/* decoration */
+:root{--grid:rgba(31,95,115,.07);--air-red:#B23A48;--air-blue:#1F5F73}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--grid:rgba(111,180,200,.07);--air-red:#E7808C;--air-blue:#6FB4C8}}
+:root[data-theme="dark"]{--grid:rgba(111,180,200,.07);--air-red:#E7808C;--air-blue:#6FB4C8}
+body{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:48px 48px}
+header{position:relative}
+.flight{position:absolute;right:110px;bottom:10px;width:220px;height:70px;pointer-events:none;color:var(--sea)}
+@media (max-width:640px){.flight{display:none}}
+.postcard.withstamp,.airmail{border:9px solid;border-image:repeating-linear-gradient(-45deg,var(--air-red) 0 12px,var(--card) 12px 20px,var(--air-blue) 20px 32px,var(--card) 32px 40px) 9;padding:26px}
+.postcard.withstamp::after{content:none}
+.postcard.withstamp h2{padding-right:96px}
+.stampbox{position:absolute;top:18px;right:20px;width:62px;height:74px;background:var(--sun-soft);border:5px dotted var(--card);outline:1px solid var(--line);display:grid;place-items:center;transform:rotate(3deg);color:var(--sea)}
+.stampbox svg{width:42px;height:42px}
+.stampbox small{position:absolute;bottom:2px;left:0;right:0;text-align:center;font:500 .5rem var(--mono);letter-spacing:.08em;color:var(--ink)}
+.postmark{position:absolute;top:30px;right:58px;width:70px;height:70px;color:var(--ink);opacity:.45;transform:rotate(-12deg);pointer-events:none}
+.postmark-big{width:150px;height:150px;color:var(--ok);animation:stamp .5s cubic-bezier(.2,1.6,.4,1)}
+.pile{display:flex;justify-content:center;gap:0;padding:8px 0 4px}
+.pile span{width:110px;height:74px;background:var(--card);border:6px solid;border-image:repeating-linear-gradient(-45deg,var(--air-red) 0 8px,var(--card) 8px 13px,var(--air-blue) 13px 21px,var(--card) 21px 26px) 6;display:grid;place-items:center;font:400 2rem var(--display);color:var(--sea);margin:0 -14px;box-shadow:0 4px 0 var(--line)}
+.pile span:nth-child(1){transform:rotate(-10deg)}.pile span:nth-child(2){transform:translateY(-8px) rotate(3deg);z-index:1}.pile span:nth-child(3){transform:rotate(11deg)}
+
+.wsgrid{display:grid;gap:3px;max-width:520px;width:100%;margin:0 auto}
+.wsgrid button{aspect-ratio:1;padding:0;border:1px solid var(--line);background:var(--paper);font:600 clamp(.75rem,2.6vw,1.05rem) var(--mono);color:var(--ink)}
+.wsgrid button:hover{background:var(--sea-soft);color:var(--ink)}
+.wsgrid button.hit{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.wsgrid button.sel{background:var(--sun);border-color:var(--sun);color:var(--card)}
+.bank{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bank .label{margin-right:6px}
+.chip{font:500 .9rem var(--mono);padding:4px 9px;background:var(--sea-soft);border:1px solid var(--line)}
+.chip.todo{color:var(--muted);background:transparent}
+.chip.used{text-decoration:line-through;opacity:.5}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div><p class="label">LLCER AMC · The stereotype expedition</p><h1>Mystery Postcards</h1></div>
+    <svg class="flight" viewBox="0 0 220 70" aria-hidden="true"><path d="M4 62 C 60 10, 140 0, 196 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="4 5"/><g transform="translate(198 22) rotate(18)"><path d="M-12 0 L10 0 M2 0 L-6 -9 M2 0 L-6 9 M-10 0 L-14 -5 M-10 0 L-14 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></g></svg>
+    <div class="clock" id="clock">00:00</div>
+  </header>
+  <div>
+    <div class="route" id="route" aria-hidden="true"></div>
+    <div class="legs"><span class="label">Leg 1 · Twelve postcards</span><span class="label">Leg 2 · Passport control</span></div>
+  </div>
+  <main id="app"></main>
+</div>
+
+<script>
+const RAW=[
+ ["SXJlbGFuZA==",["ireland","eire","republic of ireland"],["irlande"],["Victorian cartoons once drew its people as ape-like and always ready for a fight.","Millions of its people emigrated after a famine in the 1840s.","Shamrocks, leprechauns and a saint's day on 17 March."],"Its capital is Dublin."],
+ ["U2NvdGxhbmQ=",["scotland"],["ecosse"],["Many of its “ancient” traditions were popularised for a royal visit in 1822.","A cliché says its people are very, very careful with money.","Tartan, kilts, bagpipes and a monster in a lake."],"Its capital is Edinburgh."],
+ ["RW5nbGFuZA==",["england"],["angleterre"],["A 2015 study in the BMJ found its people's teeth were no worse than Americans'.","The cliché says its people hide their feelings behind a stiff upper lip.","Tea, polite queues and endless talk about the weather."],"Its capital is London."],
+ ["V2FsZXM=",["wales"],["pays de galles","galles"],["Its national anthem is sung in a language much older than English.","Choirs, rugby and, says the cliché, a lot of sheep.","A red dragon flies on its flag."],"Its capital is Cardiff."],
+ ["VGhlIFVuaXRlZCBTdGF0ZXM=",["united states","united states of america","usa","us","america","the us","the usa","us of a"],["etats unis","etats unis d amerique","amerique"],["A 1958 novel described its diplomats abroad as “ugly”.","The cliché: everything is bigger, from cars to food portions.","Hollywood, the Dream and fifty stars on a flag."],"Its capital is Washington, D.C."],
+ ["Q2FuYWRh",["canada"],[],["Its people are said to apologise even when someone else bumps into them.","It produces most of the world's maple syrup.","Mounties, moose and a red leaf on the flag."],"Its capital is Ottawa and its biggest city is Toronto."],
+ ["QXVzdHJhbGlh",["australia","oz"],["australie"],["“Tall poppy syndrome” describes its distrust of show-offs.","A 1980s tourism advert offered to put “another shrimp on the barbie”.","Kangaroos, deadly spiders and Christmas on the beach."],"Its biggest city is Sydney, famous for its Opera House."],
+ ["TmV3IFplYWxhbmQ=",["new zealand","nz","aotearoa"],["nouvelle zelande"],["Its tourism campaign claims the country is “100% Pure”.","Hobbits made its landscapes world-famous in the early 2000s.","The haka, the kiwi and far more sheep than people."],"Its capital is Wellington and its biggest city is Auckland."],
+ ["SmFtYWljYQ==",["jamaica"],["jamaique"],["A 1993 Disney film told the story of its bobsleigh team.","The cliché answer to everything: “No problem!”","Reggae, Bob Marley and some of the world's fastest sprinters."],"Its capital is Kingston, in the Caribbean."],
+ ["SW5kaWE=",["india","bharat"],["inde"],["A 2008 British film set in its slums won eight Oscars.","Many English speakers abroad associate it with call centres.","Bollywood, cricket and the Taj Mahal."],"Its capital is New Delhi."],
+ ["TmlnZXJpYQ==",["nigeria"],[],["Some email scams are nicknamed after a section of its criminal code: 419.","Its film industry, Nollywood, releases more films each year than Hollywood.","Afrobeats, jollof rice and Africa's most populous country."],"Its biggest city is Lagos."],
+ ["U291dGggQWZyaWNh",["south africa","rsa"],["afrique du sud"],["Archbishop Desmond Tutu called it the “Rainbow Nation”.","Many visitors imagine it as one big safari park.","Nelson Mandela, the end of apartheid and the 2010 World Cup."],"Its biggest cities are Johannesburg and Cape Town."]
+];
+const CARDS=RAW.map(([n,ok,fr,c,easy])=>({name:decodeURIComponent(escape(atob(n))),ok,fr,c,easy}));
+
+const UK=["uk","united kingdom","great britain","britain","gb","royaume uni","grande bretagne"];
+const EASY_WAIT=30, LOCK=15, IPA_HINT=45, WORD_HINT=25;
+
+/* Leg 2: passport control */
+const MEMORY=[
+ {q:"According to Chimamanda Ngozi Adichie, what is the main problem with stereotypes?",a:"They are incomplete: they make one story the only story.",w:["They are always completely false.","They only concern poor countries.","They disappear when people travel."]},
+ {q:"When Adichie started writing as a child, her characters were…",a:"white, blue-eyed, eating apples and talking about the weather, like in British and American books.",w:["Nigerian heroes from traditional legends.","animals living in the Nigerian countryside.","American students at university."]},
+ {q:"What surprised Adichie's American roommate?",a:"That Adichie spoke English so well and listened to Mariah Carey, not “tribal music”.",w:["That Adichie had never seen snow.","That Adichie wanted to study medicine.","That Adichie had read Shakespeare."]},
+ {q:"Adichie also admits she had a single story of…",a:"Mexicans, until she visited Mexico.",w:["Americans, until she watched American films.","the British, until she lived in London.","her own family, until she wrote about them."]},
+ {q:"In Four Seasons (2006), Wendy Red Star poses in traditional Apsáalooke (Crow) dress in front of…",a:"artificial, kitsch backgrounds such as inflatable animals and plastic plants.",w:["real landscapes of the Montana mountains.","famous paintings in an American museum.","skyscrapers in New York City."]},
+ {q:"What is Wendy Red Star making fun of in Four Seasons?",a:"The romantic cliché of Native Americans living in perfect harmony with nature.",w:["The way young people use social media.","Tourists who visit national parks.","Modern American fashion."]},
+ {q:"For Paul Bloom, stereotypes are first of all…",a:"a natural mental shortcut based on experience, which can still lead us to unfair judgements.",w:["a disease that only affects uneducated people.","always accurate, so we should trust them.","a recent invention of social media."]},
+ {q:"Which solution does Paul Bloom give to avoid prejudice when judging people?",a:"Hiding information, like orchestras auditioning musicians behind a screen.",w:["Asking people to meet as many strangers as possible.","Banning all television series.","Letting computers choose for us."]}
+];
+const DECODE=[
+ {ipa:"/ðə ˈprɒbləm wɪð ˈsteriətaɪps ɪz ðət ðeɪ ər ˌɪnkəmˈpliːt/",t:"The problem with stereotypes is that they are incomplete."},
+ {ipa:"/ə ˈsɪŋɡəl ˈstɔːri kən rɒb ˈpiːpəl əv ðeə ˈdɪɡnəti/",t:"A single story can rob people of their dignity."},
+ {ipa:"/ˈevri ˈkʌntri ɪz mʌtʃ mɔː ðən ɪts ˈkliːʃeɪz/",t:"Every country is much more than its clichés."},
+ {ipa:"/ˈpredʒədɪs kən bi ə ˈjuːsfəl ˈʃɔːtkʌt, bət ɪt kən ˈɔːlsəʊ bi rɒŋ/",t:"Prejudice can be a useful shortcut, but it can also be wrong."}
+];
+const WORDS=[
+ {d:"A wrong idea or belief, often because you have not understood something.",ok:["misconception"]},
+ {d:"To make something continue, especially something bad, like an unfair image.",ok:["perpetuate"]},
+ {d:"An unfair opinion about a person or a group, formed before you know the facts.",ok:["prejudice"]},
+ {d:"Firmly established and very difficult to change (adjective, two parts).",ok:["deep rooted","deeprooted"]},
+ {d:"The way a person, a group or a country is shown in a film, a book or a picture.",ok:["portrayal","representation","depiction"]}
+];
+
+const $=id=>document.getElementById(id);
+const app=$('app');
+const esc=s=>String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const norm=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[’']/g,'').toLowerCase().replace(/[^a-z]+/g,' ').trim();
+const normC=s=>norm(s).replace(/^the /,'');
+function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
+  for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
+const close=(a,b)=>a===b||(b.length>=5&&lev(a,b)<=(b.length>=9?2:1));
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const now=()=>Date.now();
+const fmt=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+
+
+const GLOBE='<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="18" r="13" fill="none" stroke="currentColor" stroke-width="2"/><ellipse cx="20" cy="18" rx="6" ry="13" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 18h26M9 11h22M9 25h22" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>';
+function postmark(text,cls){const d=new Date();const ds=String(d.getDate()).padStart(2,'0')+' '+['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()]+' '+d.getFullYear();
+  const id='pm'+Math.random().toString(36).slice(2,7);
+  return `<svg class="${cls}" viewBox="0 0 100 100" aria-hidden="true"><defs><path id="${id}" d="M50 50 m-36 0 a36 36 0 1 1 72 0 a36 36 0 1 1 -72 0"/></defs><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="50" cy="50" r="27" fill="none" stroke="currentColor" stroke-width="1.5"/><text font-family="IBM Plex Mono, monospace" font-size="8.5" letter-spacing="1" fill="currentColor"><textPath href="#${id}">${esc(text.toUpperCase())} · MYSTERY POST</textPath></text><text x="50" y="54" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="7" fill="currentColor">${ds}</text></svg>`}
+let S=null;
+const KEY='mpq-v3';
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}}
+
+
+const BANK=["misconception","perpetuate","prejudice","deep-rooted","portrayal","stereotype","perception","reinforce"];
+function guardNext(){const b=$('nextBtn');if(!b)return;b.disabled=true;setTimeout(()=>{b.disabled=false;b.focus({preventScroll:true})},700)}
+function buildSearch(){
+  const N=14,words=BANK.map(w=>w.replace(/-/g,'').toUpperCase());
+  for(let attempt=0;attempt<200;attempt++){
+    const g=Array.from({length:N},()=>Array(N).fill('')),pl=[];let ok=true;
+    for(const w of [...words].sort((a,b)=>b.length-a.length)){
+      let placed=false;
+      for(let t=0;t<300&&!placed;t++){
+        const [dr,dc]=[[0,1],[1,0],[1,1]][Math.floor(Math.random()*3)];
+        const r=Math.floor(Math.random()*(N-(dr?w.length-1:0))),c=Math.floor(Math.random()*(N-(dc?w.length-1:0)));
+        if(r<0||c<0)continue;
+        let fit=true;for(let k=0;k<w.length;k++){const x=g[r+dr*k][c+dc*k];if(x&&x!==w[k]){fit=false;break}}
+        if(!fit)continue;
+        for(let k=0;k<w.length;k++)g[r+dr*k][c+dc*k]=w[k];
+        pl.push({w,r,c,dr,dc});placed=true;
+      }
+      if(!placed){ok=false;break}
+    }
+    if(!ok)continue;
+    const L='ABCDEFGHIKLMNOPRSTUVWY';
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!g[r][c])g[r][c]=L[Math.floor(Math.random()*L.length)];
+    return {N,g,pl,found:[],sel:null};
+  }
+}
+function renderSearch(head){
+  if(!S.ws){S.ws=buildSearch();save()}
+  const W=S.ws,cells=new Set();
+  W.found.forEach(fi=>{const p=W.pl[fi];for(let k=0;k<p.w.length;k++)cells.add((p.r+p.dr*k)+','+(p.c+p.dc*k))});
+  const at=S.taskAt+60000;
+  app.innerHTML=`<article class="postcard" id="pc">${head}
+    <div class="wsgrid" style="grid-template-columns:repeat(${W.N},1fr)">${W.g.map((row,r)=>row.map((ch,c)=>`<button type="button" data-rc="${r},${c}" class="${cells.has(r+','+c)?'hit':''} ${W.sel&&W.sel[0]===r&&W.sel[1]===c?'sel':''}" aria-label="${ch}">${ch}</button>`).join('')).join('')}</div>
+    <div class="bank"><span class="label">Found ${W.found.length} / ${W.pl.length}</span>${W.pl.map((p,i)=>`<span class="chip ${W.found.includes(i)?'':'todo'}">${W.found.includes(i)?BANK[BANK.findIndex(b=>b.replace(/-/g,'').toUpperCase()===p.w)]:p.w.length+' letters'}</span>`).join('')}</div>
+    <div class="more">${now()>=at?'<button id="wsHint" type="button">Show me a first letter</button>':`<span class="timer" id="tick" data-until="${at}" data-txt="Help available in # s">Help available in ${Math.ceil((at-now())/1000)} s</span>`}</div>
+    <p class="feedback" id="fb"></p></article>`;
+  app.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{
+    const [r,c]=b.dataset.rc.split(',').map(Number);
+    if(!W.sel){W.sel=[r,c];save();renderSearch(head);return}
+    const [r0,c0]=W.sel;W.sel=null;
+    const fi=W.pl.findIndex((p,i)=>!W.found.includes(i)&&((p.r===r0&&p.c===c0&&p.r+p.dr*(p.w.length-1)===r&&p.c+p.dc*(p.w.length-1)===c)||(p.r===r&&p.c===c&&p.r+p.dr*(p.w.length-1)===r0&&p.c+p.dc*(p.w.length-1)===c0)));
+    if(fi>=0){W.found.push(fi);save();if(W.found.length===W.pl.length){next(null,'All eight words found. Your phrasebook is complete!')}else renderSearch(head);return}
+    save();renderSearch(head);const fb=$('fb');fb.className='feedback no';fb.textContent='Not a word from the list. Try again.';
+  });
+  if($('wsHint'))$('wsHint').onclick=()=>{const i=W.pl.findIndex((p,k)=>!W.found.includes(k));if(i<0)return;const p=W.pl[i];W.sel=[p.r,p.c];S.hints=(S.hints||0)+1;save();renderSearch(head)};
+}
+function buildGate(){
+  const g=[];
+  shuffle(MEMORY.map((_,i)=>i)).slice(0,6).forEach(i=>g.push({k:'mem',i,opts:shuffle([MEMORY[i].a,...MEMORY[i].w])}));
+  DECODE.forEach((_,i)=>g.push({k:'ipa',i}));
+  g.push({k:'search'});
+  shuffle(WORDS.map((_,i)=>i)).forEach(i=>g.push({k:'word',i}));
+  return g;
+}
+const CHECKPOINTS={mem:["Checkpoint A","The customs officer's questions","Prove you remember what we studied. A wrong answer makes the officer suspicious: you wait "+LOCK+" seconds."],
+  ipa:["Checkpoint B","The intercepted messages","Decode each message written in phonetics and type the sentence in normal English."],
+  search:["Checkpoint C","The lost phrasebook","Someone tore the pages out of your phrasebook. Find the eight hidden words in the grid: tap the first letter, then the last one. Words go across, down or diagonally."],
+  word:["Checkpoint C","Using your phrasebook","Now use the words you found. Type the one that matches each definition."]};
+
+function route(){
+  const n=CARDS.length, gl=S&&S.gate?S.gate.length:0;
+  const posDone=S?(S.phase==='post'?S.idx:n):0;
+  let h='';
+  for(let i=0;i<n;i++){h+=`<b class="${i<posDone?'done':(S&&S.phase==='post'&&i===S.idx?'now':'')}"></b><i class="${i<posDone?'done':''}"></i>`}
+  const g3=['mem','ipa','word'];
+  g3.forEach((k,j)=>{
+    let st='';
+    if(S&&S.phase==='done')st='done';
+    else if(S&&S.phase==='gate'){const cur=S.gate[S.g].k==='search'?'word':S.gate[S.g].k;const ci=g3.indexOf(cur);st=j<ci?'done':j===ci?'now':''}
+    h+=`<b class="gate ${st}"></b>${j<2?`<i class="${st==='done'?'done':''}"></i>`:''}`;
+  });
+  h+=`<span class="end">${S&&S.phase==='done'?'BOARDING':'DEPARTURE'}</span>`;
+  $('route').innerHTML=h;
+}
+setInterval(()=>{
+  if(S&&S.start)$('clock').textContent=fmt((S.end||now())-S.start);
+  if(!S||S.end)return;
+  const t=$('tick');
+  if(t){const left=Math.ceil((+t.dataset.until-now())/1000);if(left>0)t.textContent=t.dataset.txt.replace('#',left);else render()}
+},250);
+
+function render(){route();if(!S)return renderStart();if(S.penaltyUntil&&S.penaltyUntil>now())return renderPenalty();if(S.phase==='post')return renderCard();if(S.phase==='gate')return renderGate();renderEnd()}
+
+function renderStart(){
+  app.innerHTML=`<section class="panel airmail">
+    <div class="pile" aria-hidden="true"><span>?</span><span>?</span><span>?</span></div>
+    <p class="label">Your mission</p>
+    <h2>Twelve postcards have reached our classroom.</h2>
+    <p class="story">Each one comes from an English-speaking country, but the senders only wrote clichés. Identify every country, then get through passport control. Only teams with a stamped boarding pass may choose their destination for the final task, and the first to arrive choose first.</p>
+    <ol class="rules">
+      <li><strong>Leg 1:</strong> read the clues and type the country in English. You cannot move on until you find it. After the third clue, an easy clue arrives, but only after ${EASY_WAIT} seconds.</li>
+      <li><strong>Leg 2:</strong> three checkpoints: questions on our lesson, secret messages in phonetics, and a lost phrasebook to rebuild.</li>
+      <li><strong>No searching!</strong> If you leave this page (another tab or app), your expedition freezes: 20 seconds the first time, then longer each time. Your boarding pass shows how many times you left.</li>
+      <li>When your boarding pass appears, go and see your teacher at once.</li>
+    </ol>
+    <label class="label" for="teamName">Expedition name</label>
+    <div class="row"><input type="text" id="teamName" autocomplete="off" maxlength="30" placeholder="e.g. The Globetrotters"><button class="primary" id="go" type="button">Set off</button></div>
+    <p class="feedback no" id="fb"></p>
+  </section>`;
+  const go=()=>{const v=$('teamName').value.trim();if(!v){$('fb').textContent='Choose a name for your expedition first.';return}
+    S={team:v,phase:'post',order:shuffle(CARDS.map((_,i)=>i)),idx:0,stage:1,easyAt:null,easyShown:false,start:now(),end:null,tries:0,easyUsed:0,gate:buildGate(),g:0,leaves:0,pending:false,penaltyUntil:0,taskAt:null,lockUntil:0,wrongOpts:[],hints:0};save();render()};
+  $('go').onclick=go;$('teamName').addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+}
+
+/* Leg 1 */
+function renderCard(){
+  const prev=$('ans')?$('ans').value:'';
+  const c=CARDS[S.order[S.idx]];
+  if(S.stage>=3&&S.easyAt===null){S.easyAt=now()+EASY_WAIT*1000;save()}
+  if(S.easyAt!==null&&!S.easyShown&&now()>=S.easyAt){S.easyShown=true;S.easyUsed++;save()}
+  const clues=c.c.slice(0,S.stage).map((t,i)=>`<li><small>Clue ${i+1}</small>${esc(t)}</li>`).join('')+(S.easyShown?`<li class="easy"><small>Easy clue</small>${esc(c.easy)}</li>`:'');
+  let more='';
+  if(S.stage<3)more=`<button id="moreBtn" type="button">Another clue</button>`;
+  else if(!S.easyShown)more=`<span class="timer" id="tick" data-until="${S.easyAt}" data-txt="Easy clue in # s">Easy clue in ${Math.ceil((S.easyAt-now())/1000)} s</span>`;
+  app.innerHTML=`<article class="postcard withstamp" id="pc">
+    <div class="stampbox">${GLOBE}<small>No. ${String(S.idx+1).padStart(2,'0')}</small></div>${postmark('Leg 1','postmark')}
+    <p class="label">Postcard ${S.idx+1} of ${CARDS.length}</p>
+    <h2>Where was this postcard sent from?</h2>
+    <ul class="clues">${clues}</ul>
+    <div class="row"><input type="text" id="ans" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Type the country in English" aria-label="Your answer"><button class="primary" id="check" type="button">Check</button></div>
+    <p class="feedback" id="fb" aria-live="polite"></p>
+    <div class="more">${more}</div>
+  </article>`;
+  const inp=$('ans');inp.value=prev;inp.focus({preventScroll:true});
+  $('check').onclick=checkCountry;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();checkCountry()}});
+  if($('moreBtn'))$('moreBtn').onclick=()=>{S.stage++;save();render()};
+}
+function shake(){const pc=$('pc');pc.classList.remove('shake');void pc.offsetWidth;pc.classList.add('shake')}
+function checkCountry(){
+  const c=CARDS[S.order[S.idx]];
+  const v=normC($('ans').value);const fb=$('fb');
+  if(!v)return;
+  S.tries++;save();
+  if(c.ok.some(a=>close(v,a))){found(c);return}
+  fb.className='feedback no';
+  if(UK.includes(v)&&["Scotland","England","Wales"].includes(c.name)){fb.className='feedback hint';fb.textContent='Close! Be more precise: which nation of the UK?'}
+  else fb.textContent='Try again.';
+  shake();$('ans').select();
+}
+function found(c){
+  const seen=S.stage, easySeen=S.easyShown;
+  S.idx++;S.stage=1;S.easyAt=null;S.easyShown=false;
+  const last=S.idx>=CARDS.length;
+  if(last){S.phase='gate';S.g=0;S.taskAt=null}
+  save();route();
+  app.innerHTML=`<section class="panel found airmail"><p class="label">Postcard ${S.idx} identified</p><p class="country">${esc(c.name)}</p>${postmark(c.name,'postmark-big')}
+    <div class="recap"><p class="label">All the clues on this postcard</p><ul class="clues">${c.c.map((t,i)=>`<li class="${i<seen?'':'new'}"><small>Clue ${i+1}${i<seen?'':' · you did not need it'}</small>${esc(t)}</li>`).join('')}<li class="easy ${easySeen?'':'new'}"><small>Easy clue${easySeen?'':' · you did not need it'}</small>${esc(c.easy)}</li></ul></div>
+    <button class="primary" id="nextBtn" type="button">${last?'Head for passport control':'Next postcard'}</button></section>`;
+  $('nextBtn').onclick=()=>{if(last)S.gateIntro=true;save();render()};
+  guardNext();
+}
+
+/* Leg 2 */
+function renderGate(){
+  const task=S.gate[S.g];
+  const sameKind=S.gate.filter(t=>t.k===task.k);const pos=sameKind.indexOf(task)+1;
+  const [cp,title,intro]=CHECKPOINTS[task.k];
+  const firstOfKind=pos===1&&S.gateIntro!==false&&S.introFor!==task.k;
+  if(firstOfKind){
+    app.innerHTML=`<section class="panel"><p class="label">${cp}</p><h2>${title}</h2><p class="story">${intro}</p><button class="primary" id="enter" type="button">Go to the desk</button></section>`;
+    $('enter').onclick=()=>{S.introFor=task.k;S.taskAt=now();save();render()};
+    return;
+  }
+  if(S.taskAt===null){S.taskAt=now();save()}
+  const head=`<div class="gatebar"><span class="label">${cp} · ${title}</span><span class="label">${pos} / ${sameKind.length}</span></div>`;
+  if(task.k==='search'){renderSearch(head);return}
+  if(task.k==='mem'){
+    const m=MEMORY[task.i];const locked=S.lockUntil>now();
+    app.innerHTML=`<article class="postcard" id="pc">${head}<p class="question">${esc(m.q)}</p>
+      <div class="opts">${task.opts.map((o,j)=>`<button type="button" data-j="${j}" class="${S.wrongOpts.includes(j)?'wrong':''}" ${locked||S.wrongOpts.includes(j)?'disabled':''}>${esc(o)}</button>`).join('')}</div>
+      ${locked?`<p class="lock"><span id="tick" data-until="${S.lockUntil}" data-txt="The officer is suspicious. Wait # s.">The officer is suspicious. Wait ${Math.ceil((S.lockUntil-now())/1000)} s.</span></p>`:'<p class="feedback" id="fb"></p>'}</article>`;
+    app.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{
+      const j=+b.dataset.j;S.tries++;
+      if(task.opts[j]===m.a){next();return}
+      S.wrongOpts.push(j);S.lockUntil=now()+LOCK*1000;save();render();shake();
+    });
+    return;
+  }
+  const prev=$('ans')?$('ans').value:'';
+  let body='',hint='',ph='';
+  if(task.k==='ipa'){
+    const d=DECODE[task.i];const at=S.taskAt+IPA_HINT*1000;
+    body=`<p class="question">Decode this message.</p><p class="ipa" lang="en-GB-fonipa">${esc(d.ipa)}</p>`;
+    hint=now()>=at?`<p class="hintbox">Hint: it starts with “${esc(d.t.split(' ').slice(0,3).join(' '))}…”</p>`:`<span class="timer" id="tick" data-until="${at}" data-txt="Hint in # s">Hint in ${Math.ceil((at-now())/1000)} s</span>`;
+    ph='Type the sentence';
+  }else{
+    const w=WORDS[task.i];const at=S.taskAt+WORD_HINT*1000;const ans=w.ok[0];
+    body=`<p class="question">${esc(w.d)}</p><div class="bank"><span class="label">Your phrasebook</span>${BANK.map(b=>`<span class="chip ${S.usedWords&&S.usedWords.includes(b)?'used':''}">${b}</span>`).join('')}</div>`;
+    hint=now()>=at?`<p class="hintbox">Hint: ${esc(ans.split(' ').map(x=>x[0].toUpperCase()+' _'.repeat(x.length-1)).join('  -  '))}</p>`:`<span class="timer" id="tick" data-until="${at}" data-txt="Hint in # s">Hint in ${Math.ceil((at-now())/1000)} s</span>`;
+    ph='Type the word';
+  }
+  app.innerHTML=`<article class="postcard" id="pc">${head}${body}
+    <div class="row"><input type="text" id="ans" autocomplete="off" spellcheck="false" placeholder="${ph}" aria-label="${ph}"><button class="primary" id="check" type="button">Check</button></div>
+    <p class="feedback" id="fb" aria-live="polite"></p><div class="more">${hint}</div></article>`;
+  const inp=$('ans');inp.value=prev;inp.focus({preventScroll:true});
+  const go=()=>{
+    const v=norm(inp.value);if(!v)return;S.tries++;save();
+    let ok=false;
+    if(task.k==='ipa'){const t=norm(DECODE[task.i].t);ok=lev(v,t)<=Math.max(3,Math.floor(t.length/15))}
+    else ok=WORDS[task.i].ok.some(a=>close(v,norm(a)));
+    if(ok){if(task.k==='word'){S.usedWords=(S.usedWords||[]).concat(BANK.find(b=>norm(b)===norm(WORDS[task.i].ok[0])))}next(task.k==='ipa'?DECODE[task.i].t:null);return}
+    $('fb').className='feedback no';$('fb').textContent='Try again.';shake();inp.select();
+  };
+  $('check').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go()}});
+}
+function next(show,custom){
+  const was=S.gate[S.g];
+  S.g++;S.taskAt=null;S.lockUntil=0;S.wrongOpts=[];
+  if(S.g>=S.gate.length){S.phase='done';S.end=now()}
+  save();route();
+  const msg=custom?`<p class="question" style="text-align:center">${esc(custom)}</p>`:was.k==='mem'?`<p class="question" style="text-align:center">${esc(MEMORY[was.i].a)}</p>`:show?`<p class="question" style="text-align:center">${esc(show)}</p>`:`<p class="question" style="text-align:center">${esc(WORDS[was.i].ok[0])}</p>`;
+  app.innerHTML=`<section class="panel found"><span class="bigstamp">Cleared</span>${msg}<button class="primary" id="nextBtn" type="button">${S.phase==='done'?'Collect your boarding pass':'Next'}</button></section>`;
+  $('nextBtn').onclick=render;guardNext();
+}
+
+function renderEnd(){
+  route();
+  app.innerHTML=`<section class="pass" aria-label="Boarding pass">
+    <div class="main">
+      <div class="field wide"><span class="label">Expedition</span><b>${esc(S.team)}</b></div>
+      <div class="field"><span class="label">From</span><b>The Single Story</b></div>
+      <div class="field"><span class="label">To</span><b>Your choice</b></div>
+      <div class="field"><span class="label">Travel time</span><b class="mono">${fmt(S.end-S.start)}</b></div>
+      <div class="field"><span class="label">Answers tried</span><b class="mono">${S.tries}</b></div>
+      <div class="field"><span class="label">Easy clues</span><b class="mono">${S.easyUsed}</b></div>
+      <div class="field"><span class="label">Left the page</span><b class="mono">${S.leaves||0}</b></div>
+    </div>
+    <div class="stub"><span class="label">Gate</span><b>Desk</b><span class="label">Boarding now</span><div class="bars"></div></div>
+  </section>
+  <section class="panel" style="align-items:center;text-align:center">
+    <h2>Go and see your teacher now!</h2>
+    <p style="color:var(--muted)">Show your boarding pass and say which country you choose, and why.</p>
+    <button id="reset" type="button" style="font-weight:500;font-size:.85rem;border-color:var(--line);color:var(--muted)">New expedition on this device</button>
+  </section>`;
+  $('reset').onclick=()=>{const b=$('reset');if(b.dataset.sure){S=null;save();$('clock').textContent='00:00';render()}else{b.dataset.sure='1';b.textContent='Tap again to erase this result'}};
+}
+
+function renderPenalty(){
+  app.innerHTML=`<section class="panel found" style="border-color:var(--stamp)"><p class="label">Expedition frozen</p>
+    <p class="country" style="color:var(--stamp)">No searching!</p>
+    <p>You left the page. The border guards make you wait.</p>
+    <p class="lock"><span id="tick" data-until="${S.penaltyUntil}" data-txt="Back on the road in # s">Back on the road in ${Math.ceil((S.penaltyUntil-now())/1000)} s</span></p>
+    <p class="label">Times you left the page: ${S.leaves}</p></section>`;
+}
+function startPenalty(){
+  if(!S||!S.pending)return;
+  S.pending=false;S.penaltyUntil=now()+Math.min(90,20*S.leaves)*1000;save();render();
+}
+document.addEventListener('visibilitychange',()=>{
+  if(!S||S.end||(S.phase!=='post'&&S.phase!=='gate'))return;
+  if(document.hidden){S.leaves=(S.leaves||0)+1;S.pending=true;save()}
+  else startPenalty();
+});
+load(); if(S&&S.pending&&!S.end)startPenalty(); render();
+</script>
+
+</body>
+</html>
